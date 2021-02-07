@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <aop:config>
+        <aop:aspect id="countSells" ref="sellsCounter">
+            <aop:pointcut id="sellCut"
+                          expression="execution(* classes.Seller.sell(..))"/>
+            <aop:after pointcut-ref="sellCut" method="afterAdvice"/>
+        </aop:aspect>
+    </aop:config>
+
+
+    <bean id="sellsCounter" class="classes.CountingSales"/>
+
+
+    <bean id="startEventHandler" class="classes.events.StartEventHandler"/>
+
+    <bean id="publisher" class="classes.events.CustomEventPublisher"/>
+
+    <bean id="handler" class="classes.events.CustomEventHandler"/>
+
+    <bean id="springHelloWorld" class="classes.SpringHelloWorld" scope="singleton" init-method="doSomeJob">
+        <property name="message" value="Hello World!"/>
+    </bean>
+
+    <bean id="springHelloWorldNewOne" class="classes.SpringHelloWorldNewOne" parent="springHelloWorld">
+        <property name="message" value="Hello Inherited World"/> <!--//по всей видимости подцепляется через сеттер-->
+        <property name="newOnemessage" value="Hello New Inherited World"/>
+    </bean>
+
+    <bean id="software" class="classes.Product">
+        <property name="name" value="scanUtil"/>
+    </bean>
+
+    <bean id="hardware" class="classes.Product">
+        <property name="name" value="motionController"/>
+    </bean>
+
+    <bean id="hardWarecomercialProposal" class="classes.documents.commercialProposal">
+        <constructor-arg index="0" value="5000"/>
+        <constructor-arg index="1" ref="hardware"/>
+    </bean>
+
+    <bean id="softWarecomercialProposal" class="classes.documents.commercialProposal">
+        <constructor-arg index="0" value="5000"/>
+        <constructor-arg index="1" ref="software"/>
+    </bean>
+    
+    <bean id="sellerMisha" class="classes.Seller" init-method="startWork">
+        <property name="rating" value="9"/>
+        <property name="mood">
+            <props>
+                <prop key="morning">BAD</prop>
+                <prop key="middleDay">OK</prop>
+                <prop key="evening">GOOD</prop>
+            </props>
+        </property>
+
+        <property name="documents">
+            <set>
+                <ref bean="hardWarecomercialProposal"/>
+                <ref bean="softWarecomercialProposal"/>
+            </set>
+        </property>
+
+        <property name="products">
+            <list>
+                <ref bean="software"/>
+                <ref bean="hardware"/>
+            </list>
+        </property>
+
+        <property name="prices">
+            <map>
+                <entry key="#{software.name}" value="3000"/> <!--будет добавлять экземпляр класса, а не его параметры, поэтому используем SpEL-->
+                <entry key="#{hardware.name}" value="5000"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="sellDepartment" class="classes.SellDepartment">
+        <property name="seller"> <!--внедрение зависимости через сеттер-->
+            <bean class="classes.Seller"/> <!--сюда ссылается конструктор-->
+        </property>
+    </bean>
+    <bean class="classes.BeanPostProcessorImpl"/>
+
+
+
+
+    <bean id="stopEventHandler" class="classes.events.StopEventHandler"/>
+</beans>
